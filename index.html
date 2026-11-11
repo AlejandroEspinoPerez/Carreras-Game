@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#8fd3ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Derrape Park">
+<meta name="description" content="Derrape Park: carreras de carros arcade en 3D. Corre contra la PC o contra tus amigos en línea desde el navegador, en PC o en el móvil.">
+<title>Derrape Park</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%23fff' stroke='%231d2340' stroke-width='4'/%3E%3Cpath d='M16 16h8v8h-8zM32 16h8v8h-8zM24 24h8v8h-8zM40 24h8v8h-8zM16 32h8v8h-8zM32 32h8v8h-8zM24 40h8v8h-8zM40 40h8v8h-8z' fill='%231d2340'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--a:#2fd27a;--b:#ff4f9a;--ink:#1d2340;--blue:#3a7bff;--orange:#ff7a2f;--panel:rgba(255,255,255,.94)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:Fredoka,system-ui,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+button{font-family:inherit}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.screen.on{display:flex}
+.screen.dim{background:rgba(29,35,64,.35);backdrop-filter:blur(3px)}
+.panel{background:var(--panel);border-radius:28px;padding:22px;box-shadow:0 8px 0 rgba(29,35,64,.18),0 24px 60px rgba(29,35,64,.25);max-width:460px;width:100%;max-height:calc(100dvh - 32px);overflow:auto;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.panel.wide{max-width:700px}
+.panel h2{margin:0 0 10px;font-size:28px;text-align:center}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.menuWrap{display:flex;align-items:center;gap:40px;width:100%;max-width:1000px;justify-content:space-between}
+.logo{font-weight:700;font-size:clamp(48px,9vw,96px);color:#fff;line-height:.9;text-align:center;transform:rotate(-4deg) skewX(-6deg);text-shadow:0 5px 0 var(--orange),0 10px 0 var(--ink),0 18px 30px rgba(0,0,0,.25);letter-spacing:2px;flex:1}
+.logo small{display:block;font-size:.3em;color:#ffe14d;text-shadow:0 3px 0 var(--ink);letter-spacing:4px;margin-top:10px}
+.btn{display:block;width:100%;border:0;border-radius:18px;padding:13px 18px;margin:9px 0;font-weight:600;font-size:20px;color:#fff;background:var(--blue);box-shadow:0 6px 0 #2453b8;cursor:pointer;transition:transform .08s,filter .15s;position:relative}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #2453b8}
+.btn.green{background:var(--a);box-shadow:0 6px 0 #1c9554}.btn.green:active{box-shadow:0 2px 0 #1c9554}
+.btn.pink{background:var(--b);box-shadow:0 6px 0 #c22d70}.btn.pink:active{box-shadow:0 2px 0 #c22d70}
+.btn.gray{background:#8a93b5;box-shadow:0 6px 0 #5e6687}.btn.gray:active{box-shadow:0 2px 0 #5e6687}
+.btn.yellow{background:#ffc93a;color:var(--ink);box-shadow:0 6px 0 #c9951c}.btn.yellow:active{box-shadow:0 2px 0 #c9951c}
+.btn.orange{background:var(--orange);box-shadow:0 6px 0 #c2541a}.btn.orange:active{box-shadow:0 2px 0 #c2541a}
+.btn.teal{background:#18b6a5;box-shadow:0 6px 0 #0f8478}.btn.teal:active{box-shadow:0 2px 0 #0f8478}
+.btn.purple{background:#7e57c2;box-shadow:0 6px 0 #4d2c91}.btn.purple:active{box-shadow:0 2px 0 #4d2c91}
+.btn.small{display:inline-block;width:auto;padding:8px 14px;font-size:16px;margin:0}
+.btn:disabled{opacity:.5;pointer-events:none}
+.badge{position:absolute;top:-9px;right:-6px;background:#ff4f9a;color:#fff;font-size:12px;border-radius:10px;padding:2px 8px;transform:rotate(6deg);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.mgrid .btn{font-size:17px;padding:12px 8px;margin:6px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex:1;min-width:64px;border:3px solid #dfe5f5;background:#fff;border-radius:14px;padding:9px 6px;font-weight:600;font-size:16px;cursor:pointer;color:var(--ink)}
+.chip.sel{border-color:var(--blue);background:#eaf1ff}
+.chip small{display:block;font-size:11px;opacity:.7}
+label.t{display:block;font-weight:600;margin:14px 0 6px;opacity:.7;font-size:13px;text-transform:uppercase;letter-spacing:.8px}
+input.txt{width:100%;border:3px solid #dfe5f5;border-radius:14px;padding:11px 12px;font:600 18px Fredoka,system-ui;color:var(--ink);outline:none}
+input.txt:focus{border-color:var(--blue)}
+.prof{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.lvl{width:54px;height:54px;border-radius:50%;background:#ffc93a;display:grid;place-items:center;font-size:24px;font-weight:700;box-shadow:0 4px 0 #c9951c;flex:none}
+.pinfo{flex:1}.pinfo small{opacity:.6}
+.xpbar{height:12px;border-radius:8px;background:#e5e9f5;overflow:hidden;margin:4px 0 2px}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3a7bff,#2fd27a);border-radius:8px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.mini{display:flex;justify-content:space-between;align-items:center;font-size:14px;opacity:.75;margin-top:6px}
+.link{background:none;border:0;font-size:22px;cursor:pointer}
+.sw{width:40px;height:40px;border-radius:12px;border:3px solid #fff;box-shadow:0 0 0 2px #dfe5f5;cursor:pointer;position:relative;flex:none}
+.sw.sel{box-shadow:0 0 0 3px var(--blue)}
+.sw.lock,.chip.lock{opacity:.45;cursor:not-allowed}
+.sw.lock::after{content:'🔒';position:absolute;inset:0;display:grid;place-items:center;font-size:14px}
+.optHint{font-size:12px;opacity:.7;margin:4px 2px 0;line-height:1.35}
+#scrCustom{justify-content:flex-end}
+#scrCustom .panel{max-width:420px}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;align-items:center;font-size:13px;margin:8px 0 2px;background:#f5f7fd;border-radius:14px;padding:8px 12px}
+.stats b{font-weight:600;opacity:.75}
+.stats .bar{height:9px;border-radius:6px;background:#e1e6f3;overflow:hidden}
+.stats .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#ffc93a,#ff7a2f)}
+/* pistas */
+.tpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.tcard{position:relative;border:3px solid #dfe5f5;background:#fff;border-radius:14px;padding:6px 4px 5px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:center;line-height:1.15}
+.tcard .tb2{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 2px;border-radius:50%;background:var(--tc);font-size:21px;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.tcard b{display:block;font-size:13px}.tcard small{display:block;font-size:10px;opacity:.65}
+.tcard.sel{border-color:var(--tc);background:#f6f8ff;box-shadow:0 0 0 2px var(--tc)}
+.tcard.off{pointer-events:none}
+.cupList{background:#fff6d6;border-radius:14px;padding:8px 12px;font-size:14px;line-height:1.5}
+/* sala en línea */
+.share{display:flex;gap:8px;align-items:center;margin:6px 0 10px}
+.share input{flex:1;font-size:14px}
+.qrRow{display:flex;gap:12px;align-items:center;background:#f3f6ff;border-radius:16px;padding:8px;margin-bottom:10px}
+#lQr{width:120px;height:120px;flex:none;background:#fff;border-radius:10px;overflow:hidden}
+#lQr svg{width:100%;height:100%;display:block}
+.qrTip{font-size:14px;line-height:1.4}
+.tipSmall{font-size:13px;opacity:.65;text-align:center;margin:6px 0}
+.codeBig{font-size:34px;letter-spacing:6px;color:var(--blue)}
+.plist{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pl{background:#f3f6ff;border-radius:12px;padding:7px 10px;font-weight:600;display:flex;align-items:center;gap:8px;min-height:38px}
+.pl i{width:16px;height:16px;border-radius:5px;flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3px #dfe5f5}
+.pl em{font-style:normal;opacity:.55;font-size:13px}
+.pl.cpu{opacity:.55}
+#lStatus,#jStatus{text-align:center;margin:8px 0;min-height:22px;opacity:.8}
+/* ayuda */
+.help h3{margin:14px 0 6px;font-size:18px}
+.help p,.help li{font-size:15px;line-height:1.45;margin:4px 0}
+.help ul{padding-left:20px;margin:4px 0}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:14px;align-items:center}
+.keys b{background:#eef1fa;border-radius:7px;padding:2px 8px;text-align:center;white-space:nowrap}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{background:#f5f7fd;border-radius:16px;padding:10px 12px}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+#hud.on{display:block}
+#posBox{position:absolute;left:max(14px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));color:#fff;text-shadow:0 4px 0 var(--ink),0 8px 20px rgba(0,0,0,.25);line-height:.9}
+#hPos{font-size:64px;font-weight:700;display:inline-block;transition:transform .2s}
+#hPos.bump{animation:bump .45s}
+#hPosOf{font-size:26px;font-weight:700;margin-left:2px}
+@keyframes bump{40%{transform:scale(1.35)}}
+#hLap{margin-top:6px;display:inline-block;background:rgba(29,35,64,.78);color:#fff;text-shadow:none;border-radius:14px;padding:4px 12px;font-size:16px;font-weight:700;letter-spacing:1px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+#hLap.final{background:#ff4f4f}
+#timeBox{position:absolute;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(29,35,64,.78);color:#fff;border-radius:18px;padding:6px 16px;text-align:center;box-shadow:0 5px 0 rgba(0,0,0,.18);line-height:1.1}
+#hTime{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+#hBest{display:block;font-size:12px;opacity:.8;font-variant-numeric:tabular-nums}
+#hBest.flash{color:#ffe14d;opacity:1}
+#mini{position:absolute;right:max(14px,env(safe-area-inset-right));top:calc(max(14px,env(safe-area-inset-top)) + 56px);width:150px;height:150px;border-radius:20px;background:rgba(29,35,64,.35)}
+#board{position:absolute;left:max(14px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 104px);display:flex;flex-direction:column;gap:3px}
+#board div{display:flex;gap:6px;align-items:center;background:rgba(29,35,64,.62);color:#fff;border-radius:10px;padding:2px 9px 2px 5px;font-size:13px;font-weight:600;min-width:120px}
+#board div b{width:18px;text-align:center;opacity:.8}
+#board div i{width:10px;height:10px;border-radius:3px;flex:none}
+#board div.me{background:#ffc93a;color:var(--ink)}
+#board div.fin{opacity:.75}
+#speedo{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(29,35,64,.78);color:#fff;border-radius:22px;padding:8px 16px 8px;display:flex;gap:14px;align-items:center;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.spd{text-align:center;line-height:.9;min-width:70px}
+.spd b{font-size:34px;font-variant-numeric:tabular-nums}
+.spd small{display:block;font-size:11px;opacity:.7;letter-spacing:1px}
+#nitroBar{display:flex;gap:4px}
+#nitroBar i{width:34px;height:16px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden;position:relative}
+#nitroBar i::after{content:'';position:absolute;inset:0;width:var(--f,0%);background:linear-gradient(90deg,#25b8ff,#7a4cff)}
+#nitroBar i.full::after{background:linear-gradient(90deg,#ffb21e,#ff4f4f)}
+.nl{font-size:10px;letter-spacing:1px;opacity:.7;writing-mode:vertical-rl;transform:rotate(180deg)}
+#nitroBar.go i.full{animation:glow .5s infinite alternate}
+@keyframes glow{to{box-shadow:0 0 10px #ffb21e}}
+#wrong{position:absolute;top:24%;left:50%;transform:translateX(-50%);background:#ff4f4f;color:#fff;font-weight:700;font-size:26px;border-radius:18px;padding:8px 20px;box-shadow:0 5px 0 #b22a2a;display:none;animation:blink .6s infinite alternate}
+#wrong.on{display:block}
+@keyframes blink{to{opacity:.55}}
+#banner{position:absolute;top:28%;left:0;right:0;text-align:center;font-size:clamp(46px,9vw,96px);font-weight:700;color:#fff;text-shadow:0 5px 0 var(--ink),0 12px 30px rgba(0,0,0,.3);opacity:0}
+#banner.show{animation:banner 1.5s cubic-bezier(.2,1.4,.4,1) forwards}
+#banner.quick{animation-duration:.95s}
+#banner small{display:block;font-size:.32em;letter-spacing:2px}
+@keyframes banner{0%{opacity:0;transform:scale(.4) rotate(-6deg)}15%{opacity:1;transform:scale(1.1) rotate(-3deg)}25%{transform:scale(1) rotate(-3deg)}80%{opacity:1}100%{opacity:0;transform:scale(1.05) rotate(-3deg) translateY(-20px)}}
+#hint{position:absolute;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 74px);left:50%;transform:translateX(-50%);background:rgba(29,35,64,.7);color:#fff;padding:8px 16px;border-radius:16px;font-size:16px;white-space:nowrap;opacity:0;transition:opacity .25s;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+#hint.on{opacity:1}
+#pauseBtn,#fsBtn{position:absolute;top:max(14px,env(safe-area-inset-top));pointer-events:auto;width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.85);font-weight:700;box-shadow:0 4px 0 rgba(0,0,0,.15);cursor:pointer}
+#pauseBtn{right:14px;font-size:20px}
+#fsBtn{right:68px;font-size:22px}
+#camBtn{position:absolute;top:max(14px,env(safe-area-inset-top));right:122px;pointer-events:auto;width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.85);font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.15);cursor:pointer}
+#ctrlCard{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.9);border-radius:16px;padding:10px 14px;font-size:14px;line-height:1.55;box-shadow:0 4px 0 rgba(0,0,0,.12);transition:opacity .5s}
+#ctrlCard b{display:inline-block;min-width:74px;background:#eef1fa;border-radius:6px;padding:0 6px;margin-right:4px;text-align:center}
+#ctrlCard.hide{opacity:0}
+body.touch #ctrlCard{display:none!important}
+#netInfo{position:absolute;bottom:max(10px,env(safe-area-inset-bottom));left:14px;background:rgba(29,35,64,.55);color:#fff;border-radius:12px;padding:4px 10px;font-size:12px;display:none}
+#speedFx{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;background:repeating-conic-gradient(from 0deg at 50% 55%,rgba(255,255,255,.0) 0deg 5deg,rgba(255,255,255,.55) 5.4deg 5.8deg,rgba(255,255,255,0) 6.2deg 11deg);-webkit-mask-image:radial-gradient(circle at 50% 55%,transparent 0 34%,#000 70%);mask-image:radial-gradient(circle at 50% 55%,transparent 0 34%,#000 70%);transition:opacity .2s}
+#tags,#pops{position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+.tag{position:absolute;left:0;top:0;transform-origin:50% 100%;background:rgba(255,255,255,.8);border-radius:8px;padding:0 6px;font-size:12px;line-height:17px;font-weight:600;white-space:nowrap;display:flex;gap:4px;align-items:center;will-change:transform}
+.tag .dot{width:8px;height:8px;border-radius:3px}
+.tag.hum{box-shadow:0 0 0 2px #ffc93a}
+.pop{position:absolute;left:0;top:0;font-weight:700;font-size:26px;color:#fff;text-shadow:0 3px 0 var(--ink);white-space:nowrap;animation:popup 1.1s ease-out forwards}
+.pop.t1{color:#7fd6ff}.pop.t2{color:#ffb84a;font-size:30px}.pop.t3{color:#d79bff;font-size:36px;text-shadow:0 3px 0 #3b1470,0 0 18px rgba(190,120,255,.8)}
+.pop.good{color:#9dffc4}.pop.bad{color:#ff8a8a;font-size:22px}.pop.gold{color:#ffe14d;font-size:32px}
+@keyframes popup{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-80%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-260%) scale(1)}}
+/* táctil */
+#touchUI{position:fixed;inset:0;z-index:12;display:none;pointer-events:none}
+#touchUI.on{display:block}
+#joyZone{position:absolute;left:0;top:30%;bottom:0;width:45%;pointer-events:auto}
+#joy{position:absolute;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.25);border:3px solid rgba(255,255,255,.6);left:max(30px,env(safe-area-inset-left));bottom:max(30px,env(safe-area-inset-bottom))}
+#joyKnob{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 4px 0 rgba(0,0,0,.15)}
+#steerBtns{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:210px;height:110px;display:none}
+body.btnsteer #steerBtns{display:block}
+body.btnsteer #joyZone{display:none}
+#tbtns{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));width:240px;height:220px;pointer-events:none}
+.tb{position:absolute;pointer-events:auto;border:0;border-radius:50%;color:#fff;font-weight:700;font-size:13px;box-shadow:0 5px 0 rgba(0,0,0,.2);opacity:.9;padding:0;touch-action:none}
+.tb.off{display:none}
+.tb:active,.tb.down{transform:translateY(3px) scale(.96);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+#tbLeft,#tbRight{width:98px;height:98px;bottom:0;background:rgba(29,35,64,.55);border:3px solid rgba(255,255,255,.7);font-size:34px}
+#tbLeft{left:0}#tbRight{left:110px}
+#tbGas{width:100px;height:100px;right:0;bottom:0;background:var(--a);font-size:15px}
+#tbBrake{width:72px;height:72px;right:116px;bottom:0;background:#8a93b5}
+#tbDrift{width:84px;height:84px;right:8px;bottom:114px;background:var(--orange);font-size:14px}
+#tbNitro{width:72px;height:72px;right:106px;bottom:86px;background:#7a4cff}
+#tbNitro.ready{box-shadow:0 0 0 4px #ffe14d,0 5px 0 rgba(0,0,0,.2)}
+body.autogas #tbGas{display:none}
+body.autogas #tbBrake{width:96px;height:96px;right:0;bottom:0}
+body.autogas #tbDrift{right:112px;bottom:0;width:90px;height:90px}
+body.autogas #tbNitro{right:14px;bottom:110px;width:80px;height:80px}
+body.touch #speedo{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 66px);padding:4px 12px;gap:10px}
+body.touch .spd b{font-size:24px}
+body.touch #nitroBar i{width:26px;height:12px}
+body.touch #hint{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 122px);font-size:14px}
+body.touch #board{display:none}
+body:not(.touch) .touchOnly{display:none!important}
+/* final */
+.endTitle{font-size:46px;font-weight:700;text-align:center;margin:0}
+.endSub{text-align:center;font-size:16px;opacity:.7;margin:2px 0 8px}
+table.st{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+table.st th{opacity:.6;font-weight:600;font-size:12px;text-transform:uppercase}
+table.st td,table.st th{padding:5px 4px;text-align:center}
+table.st td:nth-child(2),table.st th:nth-child(2){text-align:left}
+table.st tr.me td{background:#fff6d6;font-weight:700}
+table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.scroll{overflow-x:auto}
+.mvp{text-align:center;background:#fff6d6;border-radius:16px;padding:8px;font-weight:600;margin:8px 0}
+.unlock{background:#eaf1ff;border-radius:12px;padding:8px 12px;margin:6px 0;font-weight:600;animation:pop .4s}
+#toast{position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-140px);background:var(--ink);color:#fff;border-radius:16px;padding:10px 18px;z-index:50;transition:transform .3s;font-weight:600;max-width:90vw;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#fade{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:40;transition:opacity .3s}
+@media (max-width:760px){
+ #fsBtn{right:14px;top:calc(max(14px,env(safe-area-inset-top)) + 52px);width:40px;height:40px;font-size:18px}
+ #camBtn{right:14px;top:calc(max(14px,env(safe-area-inset-top)) + 100px);width:40px;height:40px;font-size:18px}
+ #pauseBtn{width:40px;height:40px}
+ #mini{right:62px;top:max(14px,env(safe-area-inset-top));width:110px;height:110px}
+ .menuWrap{flex-direction:column;gap:12px;justify-content:center}
+ .logo{font-size:56px;flex:none}
+ #scrCustom{align-items:flex-end;justify-content:center}
+ #scrCustom .panel{max-height:52dvh}
+ .cols{grid-template-columns:1fr}
+ .plist{grid-template-columns:1fr}
+ #hPos{font-size:46px}#hPosOf{font-size:20px}
+ #timeBox{padding:4px 12px}#hTime{font-size:19px}
+}
+@media (max-height:430px){
+ #hPos{font-size:42px}#hPosOf{font-size:18px}
+ #hLap{font-size:13px;padding:3px 10px}
+ #mini{width:100px;height:100px;top:max(10px,env(safe-area-inset-top));right:66px}
+ #fsBtn{right:14px;top:calc(max(10px,env(safe-area-inset-top)) + 50px);width:40px;height:40px;font-size:18px}
+ #camBtn{right:14px;top:calc(max(10px,env(safe-area-inset-top)) + 96px);width:40px;height:40px;font-size:18px}
+ #pauseBtn{width:40px;height:40px;top:max(10px,env(safe-area-inset-top))}
+ #timeBox{padding:3px 12px}#hTime{font-size:18px}#hBest{font-size:10px}
+ body.touch #speedo{top:calc(max(6px,env(safe-area-inset-top)) + 54px)}
+ body.touch #hint{top:calc(max(6px,env(safe-area-inset-top)) + 100px)}
+ #tbtns{transform:scale(.86);transform-origin:100% 100%}
+ #steerBtns,#joy{transform:scale(.88);transform-origin:0 100%}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="speedFx"></div>
+<div id="tags"></div>
+<div id="pops"></div>
+
+<div id="hud">
+  <div id="posBox"><b id="hPos">1º</b><span id="hPosOf">/6</span><br><span id="hLap">VUELTA 1/3</span></div>
+  <div id="board"></div>
+  <div id="timeBox"><b id="hTime">0:00.00</b><small id="hBest">Mejor vuelta —</small></div>
+  <canvas id="mini" width="300" height="300"></canvas>
+  <div id="speedo"><div class="spd"><b id="hSpd">0</b><small>KM/H</small></div><div id="nitroBar"><i></i><i></i><i></i></div><small class="nl">NITRO</small></div>
+  <div id="wrong">⚠️ ¡Sentido contrario!</div>
+  <div id="banner"></div>
+  <div id="hint"></div>
+  <div id="ctrlCard"></div>
+  <div id="netInfo"></div>
+  <button id="camBtn" title="Cámara (C)">🎥</button>
+  <button id="fsBtn" title="Pantalla completa (F)">⛶</button>
+  <button id="pauseBtn" title="Pausa (Esc)">II</button>
+</div>
+
+<div id="touchUI">
+  <div id="joyZone"><div id="joy"><div id="joyKnob"></div></div></div>
+  <div id="steerBtns"><button class="tb" id="tbLeft">◀</button><button class="tb" id="tbRight">▶</button></div>
+  <div id="tbtns">
+    <button class="tb" id="tbGas">ACELERAR</button>
+    <button class="tb" id="tbBrake">FRENO</button>
+    <button class="tb" id="tbDrift">DERRAPE</button>
+    <button class="tb" id="tbNitro">NITRO</button>
+  </div>
+</div>
+
+<section class="screen on" id="scrMenu">
+  <div class="menuWrap">
+    <div class="logo">DERRAPE<br>PARK<small>CARRERAS ARCADE</small></div>
+    <div class="panel">
+      <div class="prof">
+        <div class="lvl" id="mLvl">1</div>
+        <div class="pinfo"><b id="mName">Piloto</b><div class="xpbar"><i id="mXp"></i></div><small id="mXpTxt"></small></div>
+      </div>
+      <button class="btn green" id="bRace">🏁 Carrera contra la PC</button>
+      <div class="mgrid">
+        <button class="btn" id="bHost">🌐 Crear sala</button>
+        <button class="btn pink" data-go="scrJoin">🔗 Unirme</button>
+        <button class="btn orange" id="bCup">🏆 Copa</button>
+        <button class="btn purple" id="bTrial">⏱️ Contrarreloj</button>
+      </div>
+      <button class="btn teal" data-go="scrHelp">📘 Cómo se juega<span class="badge" id="helpBadge">¡Léeme!</span></button>
+      <button class="btn yellow" data-go="scrCustom">🎨 Tu carro y tu piloto</button>
+      <div class="mini"><span id="mStats"></span><span><button class="link" id="bFs" title="Pantalla completa (F)">⛶</button><button class="link" id="bMute" title="Sonido">🔊</button></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen dim" id="scrSetup">
+  <div class="panel">
+    <h2 id="sTitle">Carrera contra la PC</h2>
+    <div id="sTrackWrap">
+      <label class="t">Pista</label>
+      <div class="tpick" id="sTracks"></div>
+    </div>
+    <div id="sCupWrap">
+      <label class="t">La copa</label>
+      <div class="cupList" id="sCup"></div>
+    </div>
+    <label class="t">Vueltas</label>
+    <div class="row" data-opt="laps"><button class="chip" data-v="1">1</button><button class="chip" data-v="2">2</button><button class="chip" data-v="3">3</button><button class="chip" data-v="5">5</button></div>
+    <div id="sRivWrap">
+      <label class="t">Rivales</label>
+      <div class="row" data-opt="rivals"><button class="chip" data-v="3">3</button><button class="chip" data-v="5">5</button><button class="chip" data-v="7">7</button></div>
+      <label class="t">Dificultad</label>
+      <div class="row" data-opt="diff"><button class="chip" data-v="0">Fácil</button><button class="chip" data-v="1">Normal</button><button class="chip" data-v="2">Difícil</button></div>
+    </div>
+    <div class="touchOnly">
+      <label class="t">Acelerar</label>
+      <div class="row" data-opt="autoGas"><button class="chip" data-v="1">🤖 Solo</button><button class="chip" data-v="0">✋ Con botón</button></div>
+      <label class="t">Volante</label>
+      <div class="row" data-opt="steerMode"><button class="chip" data-v="joy">🕹️ Joystick</button><button class="chip" data-v="btn">◀ ▶ Botones</button></div>
+      <p class="optHint">Con "Solo" el carro acelera sin parar y tú solo giras, frenas, derrapas y usas el nitro.</p>
+    </div>
+    <button class="btn green" id="bPlay" style="margin-top:18px">¡A correr!</button>
+    <button class="btn gray" data-go="scrMenu">Volver</button>
+  </div>
+</section>
+
+<section class="screen dim" id="scrHelp">
+  <div class="panel wide help">
+    <h2>📘 Cómo se juega</h2>
+    <p>Da las vueltas a la pista antes que los demás. Las paredes no te dejan salir, pero la tierra y el pasto te frenan. Gana quien cruce primero la meta en la última vuelta. En <b>🌐 Crear sala</b> corres contra hasta 5 amigos (cada uno en su teléfono o PC) y la PC completa la parrilla.</p>
+    <div class="cols">
+      <div class="box">
+        <h3>💻 En PC</h3>
+        <div class="keys">
+          <b>W / ↑</b><span>Acelerar</span>
+          <b>S / ↓</b><span>Frenar · marcha atrás</span>
+          <b>A D / ← →</b><span>Girar</span>
+          <b>Espacio</b><span>Derrapar (mantén mientras giras) · truco en el aire</span>
+          <b>Shift / N</b><span>Nitro</span>
+          <b>C · Q</b><span>Cambiar cámara · mirar atrás</span>
+          <b>H</b><span>Claxon</span>
+          <b>R</b><span>Volver a la pista</span>
+          <b>Esc · F · M</b><span>Pausa · pantalla completa · sonido</span>
+        </div>
+        <p style="font-size:13px;opacity:.7">También funciona con mando (gatillos, palanca, A = derrape, X = nitro).</p>
+      </div>
+      <div class="box">
+        <h3>📱 En el móvil</h3>
+        <ul>
+          <li><b>Joystick</b> (izquierda) o botones <b>◀ ▶</b> para girar.</li>
+          <li><b>ACELERAR · FRENO · DERRAPE · NITRO</b> a la derecha. Con "Acelerar: Solo" el carro acelera sin parar.</li>
+          <li>Gira el teléfono en horizontal y usa ⛶ para pantalla completa.</li>
+        </ul>
+      </div>
+    </div>
+    <h3>💨 Derrape y turbo</h3>
+    <p>Mantén <b>DERRAPE</b> mientras giras para deslizarte. Las chispas cambian de color mientras más dures: <span style="color:#25a8ef">azul</span>, <span style="color:#ff8a1a">naranja</span> y <span style="color:#a65cff">morado</span>. Suelta y sales disparado con un turbo más largo cuanto mejor fue el derrape.</p>
+    <h3>🔥 Nitro</h3>
+    <p>La barra de nitro se llena derrapando, yendo pegado detrás de otro carro (rebufo), con los saltos y los trucos. Cada tercio de la barra es un nitro. Las flechas naranjas del suelo también te dan turbo.</p>
+    <h3>🚦 Salida perfecta</h3>
+    <p>Acelera justo cuando se enciende la última luz roja (en el "1"). Si aceleras muy pronto, el motor se ahoga.</p>
+    <h3>🏆 Modos</h3>
+    <p><b>Copa</b>: las 5 pistas seguidas y se suman puntos (10, 8, 6, 5…). <b>Contrarreloj</b>: corre sola o solo contra tu fantasma y bate tu récord de vuelta. Subiendo de nivel desbloqueas carros, colores y accesorios.</p>
+    <button class="btn green" data-go="scrMenu">¡Entendido!</button>
+  </div>
+</section>
+
+<section class="screen" id="scrCustom">
+  <div class="panel">
+    <h2>Tu carro y tu piloto</h2>
+    <label class="t">Nombre</label>
+    <input class="txt" id="cName" maxlength="12" autocomplete="off">
+    <div id="custRows"></div>
+    <button class="btn green" data-go="scrMenu" style="margin-top:16px">Listo</button>
+  </div>
+</section>
+
+<section class="screen dim" id="scrJoin">
+  <div class="panel">
+    <h2>Unirme a una sala</h2>
+    <label class="t">Código de la sala</label>
+    <input class="txt" id="jCode" maxlength="6" placeholder="ABCDE" autocomplete="off" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:28px">
+    <div id="jStatus"></div>
+    <p class="tipSmall">Abre el link en Chrome o Safari (no dentro de WhatsApp o Instagram). No hace falta estar en la misma red.</p>
+    <button class="btn green" id="bJoin">Entrar</button>
+    <button class="btn gray" data-go="scrMenu">Volver</button>
+  </div>
+</section>
+
+<section class="screen dim" id="scrLobby">
+  <div class="panel wide">
+    <h2>Sala <span class="codeBig" id="lCode">-----</span></h2>
+    <div class="share"><input class="txt" id="lLink" readonly><button class="btn small" id="bCopy">Copiar link</button></div>
+    <div class="qrRow" id="qrRow"><div id="lQr"></div><div class="qrTip">📱 <b>Escanea este código con la cámara del teléfono</b> para entrar a la sala. Funciona con WiFi o con datos. Hasta 6 pilotos. Deja esta pestaña abierta mientras juegan.</div></div>
+    <label class="t">Pilotos</label>
+    <div class="plist" id="lPlayers"></div>
+    <div id="lHostOpts">
+      <label class="t">Pista</label>
+      <div class="tpick" id="lTracks"></div>
+      <label class="t">Vueltas</label>
+      <div class="row" data-lopt="laps"><button class="chip" data-v="1">1</button><button class="chip" data-v="2">2</button><button class="chip" data-v="3">3</button><button class="chip" data-v="5">5</button></div>
+      <label class="t">Carros en la pista (la PC completa)</label>
+      <div class="row" data-lopt="cars"><button class="chip" data-v="2">Solo amigos</button><button class="chip" data-v="4">4</button><button class="chip" data-v="6">6</button><button class="chip" data-v="8">8</button></div>
+      <label class="t">Dificultad de la PC</label>
+      <div class="row" data-lopt="diff"><button class="chip" data-v="0">Fácil</button><button class="chip" data-v="1">Normal</button><button class="chip" data-v="2">Difícil</button></div>
+    </div>
+    <div id="lGuestInfo" class="tipSmall"></div>
+    <div id="lStatus"></div>
+    <button class="btn green" id="bStart">¡Empezar carrera!</button>
+    <button class="btn gray" id="bLeave">Salir de la sala</button>
+  </div>
+</section>
+
+<section class="screen dim" id="scrPause">
+  <div class="panel">
+    <h2>Pausa</h2>
+    <button class="btn green" id="bResume">Continuar</button>
+    <button class="btn" id="bCam">🎥 Cámara: Normal</button>
+    <button class="btn" id="bTags">🏷️ Nombres: Auto</button>
+    <button class="btn" id="bQuality">⚙️ Calidad: Automática</button>
+    <button class="btn touchOnly" id="bAutoGas">🤖 Acelerar: Solo</button>
+    <button class="btn touchOnly" id="bSteer">🕹️ Volante: Joystick</button>
+    <button class="btn touchOnly" id="bVib">📳 Vibración: Sí</button>
+    <button class="btn orange" id="bRestart">🔄 Reiniciar carrera</button>
+    <button class="btn gray" id="bQuit">Salir al menú</button>
+  </div>
+</section>
+
+<section class="screen dim" id="scrEnd">
+  <div class="panel wide">
+    <p class="endTitle" id="eTitle">¡Victoria!</p>
+    <div class="endSub" id="eSub"></div>
+    <div class="scroll"><table class="st" id="eTable"></table></div>
+    <div class="mvp" id="eMvp"></div>
+    <div class="scroll"><table class="st" id="eCup"></table></div>
+    <div class="prof" style="margin-top:10px">
+      <div class="lvl" id="eLvl">1</div>
+      <div class="pinfo"><b id="eXpGain">+0 XP</b><div class="xpbar"><i id="eXp"></i></div><small id="eXpTxt"></small></div>
+    </div>
+    <div id="eUnlocks"></div>
+    <button class="btn green" id="bAgain">¡Revancha!</button>
+    <button class="btn" id="bToLobby" style="display:none">Volver a la sala</button>
+    <button class="btn gray" id="bEndMenu">Menú</button>
+  </div>
+</section>
+
+<div id="toast"></div>
+<div id="fade"></div>
+<script type="module" src="game.js"></script>
+</body>
+</html>
