@@ -191,6 +191,25 @@ body.touch #nitroBar i{width:26px;height:12px}
 body.touch #hint{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 122px);font-size:14px}
 body.touch #board{display:none}
 body:not(.touch) .touchOnly{display:none!important}
+/* poderes */
+#itemBox{position:absolute;left:calc(50% - 205px);bottom:max(16px,env(safe-area-inset-bottom));width:74px;height:74px;border-radius:22px;background:rgba(255,255,255,.92);border:4px solid #ff4f9a;display:none;place-items:center;font-size:40px;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+#itemBox small{position:absolute;right:-6px;bottom:-6px;background:#ffc93a;color:var(--ink);border-radius:8px;font-size:12px;font-weight:700;padding:1px 6px}
+#itemBox b,#tbItem b{position:absolute;left:-4px;top:-6px;background:#ff4f9a;color:#fff;border-radius:8px;font-size:12px;padding:0 5px}
+#itemBox.ready{border-color:#ffe14d;animation:pulse .7s infinite alternate}
+body.items:not(.touch) #itemBox{display:grid}
+@keyframes pulse{to{box-shadow:0 0 0 6px rgba(255,225,77,.45),0 5px 0 rgba(0,0,0,.18)}}
+#tbItem{width:78px;height:78px;right:112px;bottom:166px;background:#ff4f9a;font-size:34px;display:none}
+#tbItem.empty{opacity:.45}
+#tbItem.ready{box-shadow:0 0 0 4px #ffe14d,0 5px 0 rgba(0,0,0,.2)}
+body.items #tbItem{display:block}
+body.autogas #tbItem{right:112px;bottom:100px}
+/* retos */
+.goals{background:#f5f7fd;border-radius:16px;padding:8px 12px;margin:6px 0 4px;font-size:13px}
+.goals>b{display:block;font-size:12px;letter-spacing:.8px;opacity:.7;text-transform:uppercase;margin-bottom:2px}
+.goal{display:flex;gap:8px;align-items:center;padding:2px 0}
+.goal .gt{flex:1}
+.goal small{font-weight:700;opacity:.7}
+.goal.done{opacity:.55}.goal.done .gt{text-decoration:line-through}
 /* final */
 .endTitle{font-size:46px;font-weight:700;text-align:center;margin:0}
 .endSub{text-align:center;font-size:16px;opacity:.7;margin:2px 0 8px}
@@ -248,6 +267,7 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
   <div id="board"></div>
   <div id="timeBox"><b id="hTime">0:00.00</b><small id="hBest">Mejor vuelta —</small></div>
   <canvas id="mini" width="300" height="300"></canvas>
+  <div id="itemBox"><span id="itemIco"></span><b id="itemN"></b><small>E</small></div>
   <div id="speedo"><div class="spd"><b id="hSpd">0</b><small>KM/H</small></div><div id="nitroBar"><i></i><i></i><i></i></div><small class="nl">NITRO</small></div>
   <div id="wrong">⚠️ ¡Sentido contrario!</div>
   <div id="banner"></div>
@@ -267,6 +287,7 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
     <button class="tb" id="tbBrake">FRENO</button>
     <button class="tb" id="tbDrift">DERRAPE</button>
     <button class="tb" id="tbNitro">NITRO</button>
+    <button class="tb empty" id="tbItem"><span id="tbItemIco">⚡</span><b id="tbItemN"></b></button>
   </div>
 </div>
 
@@ -278,6 +299,7 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
         <div class="lvl" id="mLvl">1</div>
         <div class="pinfo"><b id="mName">Piloto</b><div class="xpbar"><i id="mXp"></i></div><small id="mXpTxt"></small></div>
       </div>
+      <div class="goals" id="mGoals"></div>
       <button class="btn green" id="bRace">🏁 Carrera contra la PC</button>
       <div class="mgrid">
         <button class="btn" id="bHost">🌐 Crear sala</button>
@@ -311,6 +333,11 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
       <label class="t">Dificultad</label>
       <div class="row" data-opt="diff"><button class="chip" data-v="0">Fácil</button><button class="chip" data-v="1">Normal</button><button class="chip" data-v="2">Difícil</button></div>
     </div>
+    <div id="sItemWrap">
+      <label class="t">Poderes</label>
+      <div class="row" data-opt="items"><button class="chip" data-v="1">⚡ Con poderes</button><button class="chip" data-v="0">🏁 Sin poderes</button></div>
+      <p class="optHint">Con poderes hay cajas en la pista: recoge cohetes, aceite, bombas, escudos, turbos, tornados y nevadas, y lánzaselos a los rivales.</p>
+    </div>
     <div class="touchOnly">
       <label class="t">Acelerar</label>
       <div class="row" data-opt="autoGas"><button class="chip" data-v="1">🤖 Solo</button><button class="chip" data-v="0">✋ Con botón</button></div>
@@ -337,17 +364,19 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
           <b>Espacio</b><span>Derrapar (mantén mientras giras) · truco en el aire</span>
           <b>Shift / N</b><span>Nitro</span>
           <b>C · Q</b><span>Cambiar cámara · mirar atrás</span>
+          <b>E / Ctrl</b><span>Usar el poder (modo con poderes)</span>
           <b>H</b><span>Claxon</span>
           <b>R</b><span>Volver a la pista</span>
           <b>Esc · F · M</b><span>Pausa · pantalla completa · sonido</span>
         </div>
-        <p style="font-size:13px;opacity:.7">También funciona con mando (gatillos, palanca, A = derrape, X = nitro).</p>
+        <p style="font-size:13px;opacity:.7">También funciona con mando (gatillos, palanca, A = derrape, X = nitro, B = poder).</p>
       </div>
       <div class="box">
         <h3>📱 En el móvil</h3>
         <ul>
           <li><b>Joystick</b> (izquierda) o botones <b>◀ ▶</b> para girar.</li>
           <li><b>ACELERAR · FRENO · DERRAPE · NITRO</b> a la derecha. Con "Acelerar: Solo" el carro acelera sin parar.</li>
+          <li>En el modo con poderes, el botón rosado con el icono lanza tu poder.</li>
           <li>Gira el teléfono en horizontal y usa ⛶ para pantalla completa.</li>
         </ul>
       </div>
@@ -356,10 +385,14 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
     <p>Mantén <b>DERRAPE</b> mientras giras para deslizarte. Las chispas cambian de color mientras más dures: <span style="color:#25a8ef">azul</span>, <span style="color:#ff8a1a">naranja</span> y <span style="color:#a65cff">morado</span>. Suelta y sales disparado con un turbo más largo cuanto mejor fue el derrape.</p>
     <h3>🔥 Nitro</h3>
     <p>La barra de nitro se llena derrapando, yendo pegado detrás de otro carro (rebufo), con los saltos y los trucos. Cada tercio de la barra es un nitro. Las flechas naranjas del suelo también te dan turbo.</p>
+    <h3>⚡ Poderes</h3>
+    <p>Pasa por las <b>cajas de colores</b> para ganar un poder (los que van atrás reciben los mejores): <b>🚀 Cohete</b> persigue al de adelante · <b>🛢️ Aceite</b> se queda atrás y hace dar trompos · <b>💣 Bomba</b> se lanza adelante y explota · <b>🛡️ Escudo</b> te protege de un golpe · <b>⚡ Triple turbo</b> tres empujones · <b>🌪️ Tornado</b> lanza por el aire a los que están cerca · <b>❄️ Nevada</b> congela a todos los que van delante de ti.</p>
+    <h3>🏍️ Motos</h3>
+    <p>Las motos (Viento, Cabra y Pulga) aceleran fuerte, son muy ágiles y se inclinan en las curvas, pero pesan poco: en los choques salen volando. Con el turbo levantan la rueda.</p>
     <h3>🚦 Salida perfecta</h3>
     <p>Acelera justo cuando se enciende la última luz roja (en el "1"). Si aceleras muy pronto, el motor se ahoga.</p>
     <h3>🏆 Modos</h3>
-    <p><b>Copa</b>: las 5 pistas seguidas y se suman puntos (10, 8, 6, 5…). <b>Contrarreloj</b>: corre sola o solo contra tu fantasma y bate tu récord de vuelta. Subiendo de nivel desbloqueas carros, colores y accesorios.</p>
+    <p><b>Copa</b>: las 5 pistas seguidas y se suman puntos (10, 8, 6, 5…). <b>Contrarreloj</b>: corre sola o solo contra tu fantasma y bate tu récord de vuelta. Subiendo de nivel desbloqueas carros, motos, colores y accesorios. Cada día hay <b>3 retos nuevos</b> que dan experiencia extra.</p>
     <button class="btn green" data-go="scrMenu">¡Entendido!</button>
   </div>
 </section>
@@ -400,6 +433,8 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
       <div class="row" data-lopt="laps"><button class="chip" data-v="1">1</button><button class="chip" data-v="2">2</button><button class="chip" data-v="3">3</button><button class="chip" data-v="5">5</button></div>
       <label class="t">Carros en la pista (la PC completa)</label>
       <div class="row" data-lopt="cars"><button class="chip" data-v="2">Solo amigos</button><button class="chip" data-v="4">4</button><button class="chip" data-v="6">6</button><button class="chip" data-v="8">8</button></div>
+      <label class="t">Poderes</label>
+      <div class="row" data-lopt="items"><button class="chip" data-v="1">⚡ Con poderes</button><button class="chip" data-v="0">🏁 Sin poderes</button></div>
       <label class="t">Dificultad de la PC</label>
       <div class="row" data-lopt="diff"><button class="chip" data-v="0">Fácil</button><button class="chip" data-v="1">Normal</button><button class="chip" data-v="2">Difícil</button></div>
     </div>
@@ -419,6 +454,7 @@ table.st td i{display:inline-block;width:10px;height:10px;border-radius:3px;marg
     <button class="btn" id="bQuality">⚙️ Calidad: Automática</button>
     <button class="btn touchOnly" id="bAutoGas">🤖 Acelerar: Solo</button>
     <button class="btn touchOnly" id="bSteer">🕹️ Volante: Joystick</button>
+    <button class="btn" id="bMusic">🎵 Música: Sí</button>
     <button class="btn touchOnly" id="bVib">📳 Vibración: Sí</button>
     <button class="btn orange" id="bRestart">🔄 Reiniciar carrera</button>
     <button class="btn gray" id="bQuit">Salir al menú</button>
